@@ -35,11 +35,12 @@ def download_worker(task):
             'quiet': True,
             'no_warnings': True,
             'noplaylist': True,
-            'cookiefile': 'cookies.txt',  # <-- Utilise votre fichier cookies.txt envoyé sur GitHub
+            'cookiefile': 'cookies.txt',  # Utilise ton fichier de cookies secret
             'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
             'progress_hooks': [lambda d: update_progress(task, d)],
         }
         
+        # Configuration simplifiée des formats pour éviter l'erreur "format not available"
         if task.content_type == 'audio':
             ydl_opts['format'] = 'bestaudio/best'
             ydl_opts['postprocessors'] = [{
@@ -48,6 +49,8 @@ def download_worker(task):
                 'preferredquality': '192'
             }]
         else:
+            # En choisissant 'best', yt-dlp prend la vidéo pré-assemblée par YouTube avec le son,
+            # évitant ainsi le rejet de format ou les besoins d'assemblages complexes par ffmpeg.
             if task.quality == 'best':
                 ydl_opts['format'] = 'best'
             elif task.quality == 'standard':
