@@ -35,6 +35,7 @@ def download_worker(task):
             'quiet': True,
             'no_warnings': True,
             'noplaylist': True,
+            'cookiefile': 'cookies.txt',  # <-- Utilise votre fichier cookies.txt envoyé sur GitHub
             'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
             'progress_hooks': [lambda d: update_progress(task, d)],
         }
@@ -55,10 +56,9 @@ def download_worker(task):
                 ydl_opts['format'] = 'best[height<=480]/best'
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            # On extrait d'abord les informations
+            # Extraction des informations de manière sécurisée
             info = ydl.extract_info(task.url, download=False)
             
-            # Correction de la sélection des données (évite le list index out of range)
             if 'entries' in info:
                 if len(info['entries']) > 0:
                     actual_info = info['entries'][0]
