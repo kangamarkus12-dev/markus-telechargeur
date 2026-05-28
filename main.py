@@ -55,8 +55,20 @@ def download_worker(task):
                 ydl_opts['format'] = 'best[height<=480]/best'
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(task.url, download=True)
-            actual_info = info['entries'][0] if 'entries' in info else info
+            # On extrait d'abord les informations
+            info = ydl.extract_info(task.url, download=False)
+            
+            # Correction de la sélection des données (évite le list index out of range)
+            if 'entries' in info:
+                if len(info['entries']) > 0:
+                    actual_info = info['entries'][0]
+                else:
+                    raise Exception("Aucun résultat trouvé pour cette recherche.")
+            else:
+                actual_info = info
+                
+            # Lancement effectif du téléchargement
+            ydl.download([actual_info['webpage_url']])
             filename = ydl.prepare_filename(actual_info)
             
             if task.content_type == 'audio':
@@ -91,9 +103,7 @@ HTML = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Markus Téléchargeur</title>
-    
     <link rel="icon" type="image/png" href="/icon.png">
-    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -107,7 +117,6 @@ HTML = """
             color: white;
             overflow-x: hidden;
         }
-        
         @keyframes fadeOutSplash {
             0% { opacity: 1; visibility: visible; }
             85% { opacity: 1; visibility: visible; }
@@ -148,7 +157,6 @@ HTML = """
             50% { opacity: 1; transform: scale(1.2); text-shadow: 0 0 12px currentColor; }
             100% { opacity: 0.3; transform: scale(0.8); }
         }
-        
         .main-container {
             max-width: 1100px;
             width: 90%;
@@ -469,7 +477,7 @@ HTML = """
                         downloadBtn.disabled = false;
                         promoArea.style.display = 'none';
                         statusDiv.style.color = '#ff4444';
-                        statusDiv.innerText = 'Erreur yt-dlp : ' + (statusData.error || 'Impossible de récupérer ce contenu.');
+                        statusDiv.innerText = 'Erreur : ' + (statusData.error || 'Impossible de récupérer ce contenu.');
                     }
                 } catch (err) {
                     console.error('Erreur boucle statut:', err);
@@ -493,7 +501,6 @@ HTML = """
 def index():
     return render_template_string(HTML)
 
-# Route pour servir l'icône de l'onglet
 @app.route('/icon.png')
 def favicon():
     return send_from_directory(os.getcwd(), 'icon.png')
